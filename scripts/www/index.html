@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="mobile">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05050a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="异界-落水狗 · 电脑端单机文字冒险游戏">
+<title>异界-落水狗 · 手机版</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body class="mobile">
+
+<!-- ============================================================
+     标题屏
+     ============================================================ -->
+<div class="title-screen" id="titleScreen">
+  <div class="magic-bg"><svg viewBox="0 0 400 400">
+    <defs><radialGradient id="glow"><stop offset="0%" stop-color="rgba(153,102,255,.3)"/><stop offset="100%" stop-color="rgba(153,102,255,0)"/></radialGradient></defs>
+    <circle cx="200" cy="200" r="190" fill="url(#glow)"/>
+    <circle cx="200" cy="200" r="180" fill="none" stroke="rgba(153,102,255,.5)" stroke-width="1"/>
+    <circle cx="200" cy="200" r="150" fill="none" stroke="rgba(153,102,255,.3)" stroke-width="1"/>
+    <circle cx="200" cy="200" r="120" fill="none" stroke="rgba(102,217,255,.3)" stroke-width="1"/>
+    <polygon points="200,30 340,260 60,260" fill="none" stroke="rgba(102,217,255,.35)" stroke-width="1"/>
+    <polygon points="200,370 60,140 340,140" fill="none" stroke="rgba(102,217,255,.35)" stroke-width="1"/>
+    <circle cx="200" cy="200" r="4" fill="rgba(255,204,102,.8)"/>
+  </svg></div>
+  <div class="title-main">异界-落水狗</div>
+  <div class="title-sub">— 一个穿越者的魔法手记 —</div>
+  <div class="title-btns">
+    <button class="title-btn" onclick="showSaveScreen()">进入游戏</button>
+    <button class="title-btn" onclick="showAbout()">关于</button>
+  </div>
+  <div class="title-hint">触控操作 · 点击开始</div>
+  <div class="title-ver">v0.2 · 魔法纪</div>
+</div>
+
+<!-- ============================================================
+     存档选择
+     ============================================================ -->
+<div class="save-screen" id="saveScreen">
+  <div class="save-header"><h1>选择存档</h1><p>—— 共 6 位 ——</p></div>
+  <div class="save-container">
+    <div class="save-grid" id="saveGrid"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="save-btn primary" style="padding:12px 30px;font-size:15px;max-width:280px" onclick="backToTitle()">返回主界面</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     主游戏界面
+     ============================================================ -->
+<div class="game-screen" id="gameScreen">
+  <button class="mobile-menu-btn" type="button" onclick="openMobileMenu()" aria-label="菜单"><i></i><i></i><i></i></button>
+  <div class="game-wrap">
+
+    <!-- 顶部：左 = 玩家 + 调试（各占一半）；右 = 地图层级（切换 / 层级条 / 快捷键） -->
+    <div class="top-row fs0">
+      <div class="top-left">
+        <div class="panel player-panel">
+          <div class="player-row">
+            <span class="player-name"><span id="uiPlayerName">—</span><span class="player-lv" id="uiPlayerLv">Lv.1</span></span>
+            <span class="player-money" id="uiPlayerMoney">￥30</span>
+          </div>
+          <div class="player-classes">
+            <span class="class-tag empty" id="uiClass1">—</span>
+            <span class="class-tag empty" id="uiClass2">—</span>
+          </div>
+          <div class="stat-bar"><div class="stat-bar-fill hp-fill" id="uiHpBar" style="width:100%"></div><span class="stat-bar-text" id="uiHpText">HP 100/100</span></div>
+          <div class="stat-bar"><div class="stat-bar-fill mp-fill" id="uiMpBar" style="width:100%"></div><span class="stat-bar-text" id="uiMpText">MP 50/50</span></div>
+          <div class="stat-bar"><div class="stat-bar-fill exp-fill" id="uiExpBar" style="width:0%"></div><span class="stat-bar-text" id="uiExpText">EXP 0/100</span></div>
+          <div class="title-line">称号：<span id="uiTitleName">雷之孙</span><button class="title-mini-btn" onclick="openTitle()">查看</button></div>
+        </div>
+
+        <div class="panel debug-panel">
+          <div class="panel-title">调试</div>
+          <div class="debug-row"><input type="password" id="debugPwd" placeholder="密码"><button onclick="openDebug()">修改</button></div>
+          <div class="debug-row"><button onclick="manualSave()">保存</button><button onclick="backToSaveScreen()">存档</button></div>
+          <button class="debug-time" id="uiTimeBtn">—</button>
+        </div>
+      </div>
+
+      <div class="map-head">
+        <div class="pc-hint">Esc 关闭 · Ctrl+S 保存 · B 行囊 · G 着装 · Q 任务 · T 队列 · 滚轮缩放地图</div>
+        <div class="map-switch">
+          <button id="btnWorldMap" onclick="switchMapLayer('world')">世界</button>
+          <button id="btnTownMap" onclick="switchMapLayer('town')">城镇</button>
+          <button id="btnStreetMap" onclick="switchMapLayer('street')" class="active">街道</button>
+        </div>
+        <div class="map-level-bar">
+          <div class="mlb-left"><span class="mlb-icon">◈</span><span class="mlb-name" id="mlbName">—</span><span class="mlb-tag" id="mlbTag">—</span></div>
+          <div class="mlb-hint">滚轮缩放 · 按住拖动</div>
+          <div class="mlb-zoom">
+            <button onclick="zoomMap(1.2)">+</button>
+            <button onclick="zoomMap(0.8)">−</button>
+            <button onclick="resetMapView()">⌂</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 左：附近角色（纵向，贯穿右侧两行） -->
+    <div class="npc-row fs0" id="npcRow"></div>
+
+    <!-- 左中：剧情记录 -->
+    <div class="story-box fs0" id="storyBox"></div>
+
+    <!-- 左下：角色交互按钮 -->
+    <div class="action-bar fs0">
+      <button id="btnTalk" onclick="doTalk()" disabled>对话</button>
+      <button id="btnInteract" onclick="doInteract()" disabled>互动</button>
+      <button id="btnView" onclick="doView()" disabled>查看</button>
+      <button id="btnAccept" onclick="doAccept()" disabled>接受</button>
+    </div>
+
+    <!-- 右：地图 -->
+    <div class="map-area" id="mapArea">
+      <div class="mobile-map-hud">
+        <div class="mobile-zoom">
+          <button type="button" onclick="zoomMap(1.2)" aria-label="放大">＋</button>
+          <button type="button" onclick="zoomMap(0.8)" aria-label="缩小">－</button>
+          <button type="button" onclick="resetMapView()" aria-label="重置">⌂</button>
+        </div>
+      </div>
+      <div class="map-level-bar">
+        <div class="mlb-left"><span class="mlb-icon">◆</span><span class="mlb-name" id="mlbName">—</span><span class="mlb-tag" id="mlbTag">—</span></div>
+        <div class="mlb-hint">触控缩放 · 按住拖动</div>
+      </div>
+      <div class="map-canvas" id="mapCanvas"></div>
+      <div class="edge-overlay" id="edgeOverlay"></div>
+      <div class="queue-display" id="queueDisplay"></div>
+    </div>
+
+    <!-- 右下：功能按钮 -->
+    <div class="bottom-btns fs0">
+      <button class="party-btn" id="queueToggleBtn" onclick="toggleQueue()">队列</button>
+      <div class="item-btns">
+        <button onclick="openBag()">行囊</button>
+        <button onclick="openGear()">着装</button>
+        <button onclick="openQuest()" id="questBtn">任务<span class="quest-badge" id="questBadge"></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     起名弹窗
+     ============================================================ -->
+<div class="modal-overlay" id="createModal"><div class="modal">
+  <span class="modal-close" onclick="closeCreateModal()">×</span>
+  <h3>起名</h3>
+  <p style="color:#b0b0c8;font-size:14.5px;line-height:1.8;margin-bottom:14px">穿越是一个随机事件，有人努力富强成为万众瞩目的幸运儿，有人惶恐彷徨最后郁郁一生。而你，穿越到了神奇的雅利兰斯大陆，全新的生活和新鲜的挑战在等着你。一对清贫的爷孙救起了落水的你，请问你的名字？</p>
+  <div class="form-group"><input type="text" id="playerName" maxlength="12" placeholder="输入你的名字"></div>
+  <div class="form-group"><label>性别</label>
+    <div class="gender-row">
+      <button class="gender-btn active" data-gender="男" onclick="selectGender('男')">男</button>
+      <button class="gender-btn" data-gender="女" onclick="selectGender('女')">女</button>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="closeCreateModal()">取消</button>
+    <button class="btn-primary" onclick="confirmCreate()">确认</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     查看角色
+     ============================================================ -->
+<div class="modal-overlay" id="viewModal"><div class="modal">
+  <span class="modal-close" onclick="closeViewModal()">×</span>
+  <h3 id="viewName">—</h3>
+  <div id="viewContent"></div>
+</div></div>
+
+<!-- ============================================================
+     装备详情
+     ============================================================ -->
+<div class="modal-overlay" id="equipDetailModal"><div class="modal">
+  <span class="modal-close" onclick="closeEquipDetail()">×</span>
+  <h3 id="equipDetailName">—</h3>
+  <div id="equipDetailContent"></div>
+</div></div>
+
+<!-- ============================================================
+     称号
+     ============================================================ -->
+<div class="modal-overlay" id="titleModal"><div class="modal">
+  <span class="modal-close" onclick="closeTitleModal()">×</span>
+  <h3>称号</h3>
+  <div id="titleContent"></div>
+</div></div>
+
+<!-- ============================================================
+     行囊 / 队伍 / 宠物（弹窗 · 新 UI）
+     ============================================================ -->
+<div class="modal-overlay bag-overlay" id="bagModal">
+  <div class="bag-screen" role="dialog" aria-modal="true" aria-label="行囊">
+    <header class="bag-titlebar">
+      <div class="bag-win-dots"><i></i><i></i><i></i></div>
+      <div class="bag-win-title"><span>行囊</span><span class="bag-money" title="金币"><span>金币</span><b id="bagMoney">￥30</b></span></div>
+      <div class="bag-win-sub">行囊 · 队伍 · 宠物</div>
+      <div class="bag-win-hint">Esc 或点击 × 关闭</div>
+    </header>
+    <div class="bag-win-body">
+    <aside class="bag-rail">
+      <button class="bag-tab active" data-bag-tab="bag" onclick="switchBagTab('bag')"><span class="bag-tab-ico">◈</span><span>行囊</span></button>
+      <button class="bag-tab" data-bag-tab="party" onclick="switchBagTab('party')"><span class="bag-tab-ico">◉</span><span>队伍列表</span></button>
+      <button class="bag-tab" data-bag-tab="pet" onclick="switchBagTab('pet')"><span class="bag-tab-ico">✦</span><span>宠物列表</span></button>
+      <div class="bag-rail-foot"><button class="bag-close-btn" onclick="closeBagModal()">关闭 <span>Esc</span></button></div>
+    </aside>
+
+    <div class="bag-main">
+      <header class="bag-head">
+        <div class="bag-chars" id="bagChars"></div>
+        <button class="bag-close-x" onclick="closeBagModal()" title="关闭">×</button>
+      </header>
+
+      <div class="bag-body">
+        <section class="bag-page" id="bagPageBag">
+          <div class="bag-page-title">行囊</div>
+          <div class="bag-page-grid">
+            <section class="bag-panel bag-panel-equip">
+              <div class="bag-panel-title"><span>装备</span><span class="bag-slot-count" id="bagEquipCount"></span></div>
+              <div class="bag-equip-wrap">
+                <div class="bag-current-equip" id="bagCurrentEquip"></div>
+                <div class="bag-equip-listcol">
+                  <div class="bag-panel-body" id="bagEquipBody"></div>
+                </div>
+              </div>
+            </section>
+            <section class="bag-panel bag-panel-skill">
+              <div class="bag-panel-title"><span>技能</span><span class="bag-slot-count" id="bagSkillCount">0/4</span></div>
+              <div class="bag-skill-wrap">
+                <div class="bag-skill-slots" id="bagSkillSlots"></div>
+                <div class="bag-panel-body" id="bagSkillBody"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="bag-page" id="bagPageParty" style="display:none">
+          <div class="bag-page-title">队伍列表</div>
+          <div class="bag-party-hint">点击成员选中，再到「行囊」页为其更换装备；队列站位请回主界面点「队列」调整。</div>
+          <div class="bag-party" id="bagPartyBody"></div>
+        </section>
+
+        <section class="bag-page" id="bagPagePet" style="display:none">
+          <div class="bag-page-title">宠物列表</div>
+          <div class="bag-pet-panel" id="bagPetPanel"></div>
+        </section>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     着装总览
+     ============================================================ -->
+<div class="modal-overlay" id="gearModal"><div class="modal wide">
+  <span class="modal-close" onclick="closeGearModal()">×</span>
+  <h3>着装总览</h3>
+  <div id="gearContent"></div>
+</div></div>
+
+<!-- ============================================================
+     任务面板
+     ============================================================ -->
+<div class="modal-overlay" id="questModal"><div class="modal">
+  <span class="modal-close" onclick="closeQuestModal()">×</span>
+  <h3>任务</h3>
+  <div id="questContent"></div>
+</div></div>
+
+<!-- ============================================================
+     关于
+     ============================================================ -->
+<div class="modal-overlay" id="aboutModal"><div class="modal">
+  <span class="modal-close" onclick="closeAbout()">×</span>
+  <h3>关于</h3>
+  <div style="color:#c8c8dc;font-size:14.5px;line-height:1.9">
+    <b style="color:#9966ff">异界-落水狗</b><br>一个穿越者的魔法手记。<br><br>
+    你从现实世界穿越而来，在雅利兰斯大陆从零开始。<br><br>
+    <span style="color:#667">v0.2 · 剧情与结局系统框架</span>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     转职
+     ============================================================ -->
+<div class="modal-overlay" id="classModal"><div class="modal">
+  <span class="modal-close" onclick="closeClassModal()">×</span>
+  <h3>转职 · <span id="classTrainerName">—</span></h3>
+  <div id="classContent"></div>
+</div></div>
+
+<div class="modal-overlay" id="classReplaceModal"><div class="modal" style="max-width:420px">
+  <h3 style="text-align:center">选择要替换的职业槽</h3>
+  <p style="color:#aab;font-size:14.5px;text-align:center;line-height:1.7;margin-bottom:14px">你的职业槽已满，请选择要替换掉哪一个。</p>
+  <div id="classReplaceOptions"></div>
+  <div class="modal-footer"><button class="btn-danger" onclick="closeClassReplace()">取消</button></div>
+</div></div>
+
+<!-- ============================================================
+     送礼
+     ============================================================ -->
+<div class="modal-overlay" id="giftModal"><div class="modal">
+  <span class="modal-close" onclick="closeGiftModal()">×</span>
+  <h3 id="giftTitle">送礼</h3>
+  <div id="giftBody"></div>
+</div></div>
+
+<!-- ============================================================
+     装备修复
+     ============================================================ -->
+<div class="modal-overlay" id="repairModal"><div class="modal wide">
+  <span class="modal-close" onclick="closeRepairModal()">×</span>
+  <h3 id="repairModalTitle">装备修复 · 合成</h3>
+  <div id="repairContent"></div>
+  <div class="modal-footer">
+    <button class="btn-success" onclick="repairAll()" id="repairAllBtn">一键全修</button>
+    <button class="btn-danger" onclick="closeRepairModal()">关闭</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     交易
+     ============================================================ -->
+<div class="modal-overlay" id="tradeModal"><div class="modal xwide">
+  <span class="modal-close" onclick="closeTradeModal()">×</span>
+  <h3>交易 · <span id="tradeNpcName">—</span></h3>
+  <div class="trade-header">
+    <span>现有资金：<span class="trade-money" id="tradeCurrentMoney">￥0</span></span>
+    <span>交易后：<span class="trade-money" id="tradeAfterMoney">￥0</span></span>
+  </div>
+  <div class="trade-grid">
+    <div class="trade-col">
+      <div class="trade-panel">
+        <div class="trade-panel-title">库存</div>
+        <div class="trade-panel-body" id="tradeBagStock"></div>
+      </div>
+      <div class="trade-panel">
+        <div class="trade-panel-title">将获得（买入）</div>
+        <div class="trade-panel-body" id="tradeBuyList"></div>
+      </div>
+      <div class="trade-total minus" id="tradeBuyTotal">合计：-￥0</div>
+    </div>
+    <div class="trade-col">
+      <div class="trade-panel">
+        <div class="trade-panel-title">商店</div>
+        <div class="trade-panel-body" id="tradeShopList"></div>
+      </div>
+      <div class="trade-panel">
+        <div class="trade-panel-title">将交易（卖出）</div>
+        <div class="trade-panel-body" id="tradeSellList"></div>
+      </div>
+      <div class="trade-total plus" id="tradeSellTotal">合计：+￥0</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-success" onclick="confirmTrade()" id="tradeConfirmBtn">确定交易</button>
+    <button class="btn-danger" onclick="closeTradeModal()">取消</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     踢出队伍
+     ============================================================ -->
+<div class="modal-overlay" id="kickModal"><div class="modal" style="max-width:380px">
+  <h3 style="text-align:center">请出队伍？</h3>
+  <p id="kickText" style="color:#aab;font-size:14.5px;text-align:center;line-height:1.7;margin-bottom:14px">确定请出该角色？好感度会下降。</p>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="closeKickModal()">取消</button>
+    <button class="btn-primary" onclick="confirmKick()">确定</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     通用确认
+     ============================================================ -->
+<div class="modal-overlay" id="confirmActionModal"><div class="modal" style="max-width:380px">
+  <h3 style="text-align:center" id="confirmActionTitle">确认</h3>
+  <p id="confirmActionMsg" style="color:#aab;font-size:14.5px;text-align:center;line-height:1.7;margin-bottom:14px">—</p>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="closeConfirmAction()">取消</button>
+    <button class="btn-primary" id="confirmActionBtn">确定</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     角色离世
+     ============================================================ -->
+<div class="modal-overlay" id="deathModal"><div class="modal" style="max-width:420px">
+  <h3 id="deathTitle" style="text-align:center;color:#ffcc66">角色离世</h3>
+  <p id="deathMsg" style="color:#aab;font-size:14.5px;text-align:center;line-height:1.8;margin-bottom:14px;white-space:pre-line">—</p>
+  <div class="modal-footer">
+    <button class="btn-primary" onclick="confirmDeathNotice()">确认</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     前言
+     ============================================================ -->
+<div class="modal-overlay" id="prologueModal"><div class="modal" style="max-width:520px">
+  <h3 id="prologueTitle">前言</h3>
+  <div id="prologueContent" style="color:#c8c8dc;font-size:14.5px;line-height:1.9;min-height:120px;white-space:pre-wrap"></div>
+  <div class="modal-footer">
+    <button class="btn-primary" id="prologueNextBtn" onclick="prologueNext()">继续</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     游戏结束
+     ============================================================ -->
+<div class="modal-overlay" id="gameOverModal"><div class="modal" style="max-width:420px">
+  <h3 id="gameOverTitle" style="text-align:center;color:#ff6688">游戏结束</h3>
+  <p id="gameOverMsg" style="color:#aab;font-size:14.5px;text-align:center;line-height:1.8;margin-bottom:14px;white-space:pre-line">—</p>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="backToSaveScreen()">返回存档</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     奖励弹窗
+     ============================================================ -->
+<div class="modal-overlay" id="rewardModal"><div class="modal" style="max-width:400px">
+  <h3 id="rewardTitle" style="text-align:center">提示</h3>
+  <div id="rewardBody" style="color:#c8c8dc;font-size:15px;line-height:1.9;text-align:center;min-height:50px;padding:10px 0;white-space:pre-wrap"></div>
+  <div class="modal-footer">
+    <button class="btn-primary" onclick="closeRewardModal()">确定</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     战斗结算
+     ============================================================ -->
+<div class="modal-overlay" id="battleResultModal"><div class="modal battle-result-modal">
+  <h3 class="br-title" id="battleResultTitle">战斗胜利</h3>
+  <div class="br-body" id="battleResultBody"></div>
+  <div class="modal-footer">
+    <button class="btn-primary" onclick="closeBattleResult()">离开战斗</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     战斗界面
+     ============================================================ -->
+<div class="battle-screen" id="battleScreen">
+  <div class="battle-wrap">
+
+    <div class="top-row">
+      <div class="panel">
+        <div class="player-row">
+          <span class="player-name"><span id="btPlayerName">—</span><span class="player-lv" id="btPlayerLv">Lv.1</span></span>
+          <span class="player-money" id="btPlayerMoney">￥30</span>
+        </div>
+        <div class="player-classes">
+          <span class="class-tag empty" id="btClass1">—</span>
+          <span class="class-tag empty" id="btClass2">—</span>
+        </div>
+        <div class="stat-bar"><div class="stat-bar-fill hp-fill" id="btHpBar"></div><span class="stat-bar-text" id="btHpText">HP 100/100</span></div>
+        <div class="stat-bar"><div class="stat-bar-fill mp-fill" id="btMpBar"></div><span class="stat-bar-text" id="btMpText">MP 50/50</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">战斗</div>
+        <div class="battle-round" id="btRound">第 1 回合</div>
+        <div class="battle-sub" id="btTurnOwner">— 行动中</div>
+        <div class="battle-sub">快捷键：1-5 技能 · 空格 跳过回合</div>
+      </div>
+    </div>
+
+    <div class="side-grid sg-enemy-back"><div class="side-label">敌方后排</div><div class="unit-row enemy-row" id="enemyBack"></div></div>
+    <div class="side-grid sg-enemy-front"><div class="side-label">敌方前排</div><div class="unit-row enemy-row" id="enemyFront"></div></div>
+
+    <div class="battle-log-wrap">
+      <div class="battle-log" id="battleLog"></div>
+      <button class="battle-mini-btn" id="battleMiniBtn" onclick="toggleBattleLogMode()">精简</button>
+      <button class="battle-flee-btn" onclick="tryFleeBattle()">逃跑</button>
+    </div>
+
+    <div class="side-grid sg-ally-front"><div class="side-label">我方前排</div><div class="unit-row ally-front-row" id="allyFront"></div></div>
+    <div class="side-grid sg-ally-back"><div class="side-label">我方后排</div><div class="unit-row ally-back-row" id="allyBack"></div></div>
+
+    <div class="battle-skills" id="battleSkills"></div>
+
+    <div class="battle-bottom-row">
+      <button class="battle-item-btn" id="battleItemBtn" onclick="toggleBattleItemPanel()">道具</button>
+      <button class="battle-skip-btn" id="battleSkipBtn" onclick="battleSkipTurn()">跳过回合</button>
+    </div>
+
+     </div>
+  <div class="battle-tip" id="battleTip"></div>
+</div>
+
+<!-- ============================================================
+     战斗内使用道具（弹窗版）
+     ============================================================ -->
+<div class="modal-overlay" id="battleItemModal">
+  <div class="modal" style="max-width:420px">
+    <span class="modal-close" onclick="closeBattleItemPanel()">×</span>
+    <h3>使用道具</h3>
+    <div id="battleItemList" style="max-height:55vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     战斗逃跑确认
+     ============================================================ -->
+<div class="modal-overlay" id="confirmFleeModal"><div class="modal" style="max-width:340px">
+  <h3 style="text-align:center">确认逃跑？</h3>
+  <p style="color:#aab;font-size:14.5px;text-align:center;line-height:1.7;margin-bottom:14px">战斗中的逃跑会视为任务失败，是否确定？</p>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="closeFleeConfirm()">继续战斗</button>
+    <button class="btn-primary" onclick="confirmFlee()">确定逃跑</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     调试面板
+     ============================================================ -->
+<div class="modal-overlay" id="debugModal"><div class="modal debug-modal">
+  <span class="modal-close" onclick="closeDebugModal()">×</span>
+  <h3>调试面板</h3>
+  <div class="debug-tabs" id="debugTabs">
+    <div class="debug-tab active" data-debug-tab="save" onclick="switchDebugTab('save')">存档</div>
+    <div class="debug-tab" data-debug-tab="chars" onclick="switchDebugTab('chars')">角色</div>
+    <div class="debug-tab" data-debug-tab="skills" onclick="switchDebugTab('skills')">技能</div>
+    <div class="debug-tab" data-debug-tab="equips" onclick="switchDebugTab('equips')">物品</div>
+    <div class="debug-tab" data-debug-tab="enemies" onclick="switchDebugTab('enemies')">敌人</div>
+    <div class="debug-tab" data-debug-tab="battle" onclick="switchDebugTab('battle')">战斗</div>
+    <div class="debug-tab" data-debug-tab="story" onclick="switchDebugTab('story')">剧情</div>
+    <div class="debug-tab" data-debug-tab="data" onclick="switchDebugTab('data')">数据</div>
+  </div>
+  <div class="debug-content" id="debugContent"></div>
+  <div class="modal-footer">
+    <button class="btn-danger" onclick="debugResetCurrentSave()">重置当前存档</button>
+    <button class="btn-primary" onclick="closeDebugModal()">关闭</button>
+  </div>
+</div></div>
+
+<!-- ============================================================
+     章节标题 / 过渡动画
+     ============================================================ -->
+<div class="chapter-overlay" id="chapterOverlay"><div class="chapter-title" id="chapterTitle"></div></div>
+<div class="transition-overlay" id="transitionOverlay"><div class="transition-text" id="transitionText">正在前往…</div><div class="transition-bar"></div></div>
+
+<!-- ============================================================
+     剧情弹窗
+     ============================================================ -->
+<div class="modal-overlay" id="storyModal">
+  <div class="story-modal-box">
+    <div class="story-modal-content" id="storyModalContent"></div>
+    <div class="story-modal-footer">
+      <button class="story-skip-btn" onclick="storyModalSkip()">跳过</button>
+      <button class="story-next-btn" id="storyModalNext" onclick="storyModalNext()">继续</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     手机菜单
+     ============================================================ -->
+<div class="modal-overlay mobile-menu-overlay" id="mobileMenuModal">
+  <div class="modal mobile-menu" role="dialog" aria-modal="true" aria-label="菜单">
+    <span class="modal-close" onclick="closeMobileMenu()">×</span>
+    <h3>菜单</h3>
+    <div class="mobile-menu-time" id="mobileMenuTime">—</div>
+    <div class="mobile-menu-grid">
+      <button type="button" onclick="mobileMenuSave()"><b>存</b><span>保存</span></button>
+      <button type="button" onclick="mobileMenuSaves()"><b>读</b><span>读档</span></button>
+      <button type="button" onclick="mobileMenuTitle()"><b>标</b><span>标题</span></button>
+      <button type="button" onclick="mobileMenuAbout()"><b>关</b><span>关于</span></button>
+      <button class="mobile-menu-debug" type="button" onclick="mobileMenuDebug()"><b>调</b><span>调试面板</span></button>
+    </div>
+    <button class="mobile-menu-close" type="button" onclick="closeMobileMenu()">关闭</button>
+    <div class="mobile-menu-ver">异界-落水狗 手机版 v0.2</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     脚本加载顺序（数据 → 引擎 → UI）
+     ============================================================ -->
+<script src="data-config.js"></script>
+<script src="data-player.js"></script>
+<script src="data-attributes.js"></script>
+<script src="data-effects.js"></script>
+<script src="data-skills.js"></script>
+<script src="data-classes.js"></script>
+<script src="data-equips.js"></script>
+<script src="data-materials.js"></script>
+<script src="data-tags.js"></script>
+<script src="data-characters.js"></script>
+<script src="data-npc-drops.js"></script>
+<script src="data-loot.js"></script>
+<script src="data-world.js"></script>
+<script src="data-actors.js"></script>
+<script src="data-lines.js"></script>
+<script src="data-crafting.js"></script>
+<script src="core.js"></script>
+<script src="battle.js"></script>
+<script src="story.js"></script>
+<script src="main.js"></script>
+<script src="mobile.js"></script>
+</body>
+</html>
